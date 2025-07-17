@@ -93,15 +93,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     if (data.success) {
                         showSuccessAlert(data.bot);
+                        showAlert('success', `Bot ${data.bot.bot_id} registered successfully!`);
                         registerForm.reset();
                         document.getElementById('manufactured_on').value = new Date().toISOString().split('T')[0];
                         generateNewBotId();
                         refreshBotsList();
                     } else {
-                        showAlert('danger', data.message);
+                        showAlert('danger', `Failed to register bot: ${data.message}`);
                     }
                 } catch (error) {
-                    showAlert('danger', 'Error: ' + error.message);
+                    showAlert('danger', `Error registering bot: ${error.message}`);
                 } finally {
                     loadingSpinner.style.display = 'none';
                     registerForm.querySelector('button[type="submit"]').disabled = false;
@@ -136,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (bots.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="5">
+                            <td colspan="7">
                                 <div class="empty-state">
                                     <i class="bi bi-robot" style="font-size: 2.5rem;"></i>
                                     <p class="mt-3 mb-0">No bots registered yet</p>
@@ -161,12 +162,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                     
-                    const searchData = `${bot.bot_id.toLowerCase()} ${(bot.model || '').toLowerCase()} ${dateStr.toLowerCase()}`;
+                    // Handle hardware version display
+                    const hwVersion = bot.hardware_version ? `v${bot.hardware_version}` : 'N/A';
+                    
+                    // Handle serial number display
+                    const serialNumber = bot.serial_number || 'N/A';
+                    
+                    const searchData = `${bot.bot_id.toLowerCase()} ${(bot.model || '').toLowerCase()} ${dateStr.toLowerCase()} ${hwVersion.toLowerCase()} ${serialNumber.toLowerCase()}`;
                     
                     return `
                         <tr data-searchable="${searchData}">
                             <td><code class="text-primary fw-bold">${bot.bot_id}</code></td>
                             <td><span class="badge" style="background: var(--primary-blue); color: white;">${bot.model || 'N/A'}</span></td>
+                            <td class="text-muted">${hwVersion}</td>
+                            <td class="text-muted"><small>${serialNumber}</small></td>
                             <td class="text-muted">${dateStr}</td>
                             <td>
                                 <div class="barcode-container">
@@ -253,6 +262,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <table class="table table-borderless">
                                         <tr><td class="fw-bold text-primary">Bot ID:</td><td><code class="fs-6">${bot.bot_id}</code></td></tr>
                                         <tr><td class="fw-bold text-primary">Model:</td><td><span class="badge" style="background: var(--primary-blue);">${bot.model || 'N/A'}</span></td></tr>
+                                        <tr><td class="fw-bold text-primary">Hardware Version:</td><td>${bot.hardware_version ? `v${bot.hardware_version}` : 'N/A'}</td></tr>
+                                        <tr><td class="fw-bold text-primary">Serial Number:</td><td><code class="fs-6">${bot.serial_number || 'N/A'}</code></td></tr>
                                         <tr><td class="fw-bold text-primary">Manufactured:</td><td>${manufacturedDate}</td></tr>
                                         <tr><td class="fw-bold text-primary">Registered:</td><td>${createdDate}</td></tr>
                                         <tr><td class="fw-bold text-primary">Status:</td><td><span class="badge bg-success">Active</span></td></tr>
