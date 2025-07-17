@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGOS Manufacturer Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="main-container">
+        <div class="portal-card">
+            <div class="portal-header">
+                <h1>AGOS Manufacturing Portal</h1>
+                <p>Bot Registration & Management System</p>
+            </div>
+            
+            <!-- Alert Messages -->
+            <div class="alert-container px-3 pt-2">
+                <div id="alert-container"></div>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-pane" type="button" role="tab">
+                        <i class="bi bi-plus-circle me-2"></i>Register Bot
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bots-tab" data-bs-toggle="tab" data-bs-target="#bots-pane" type="button" role="tab">
+                        <i class="bi bi-list-ul me-2"></i>View Bots (<span id="botCount">{{ bots|length }}</span>)
+                    </button>
+                </li>
+            </ul>
+            
+            <!-- Tab Content -->
+            <div class="tab-content" id="mainTabContent">
+                <!-- Register Tab -->
+                <div class="tab-pane fade show active" id="register-pane" role="tabpanel">
+                    <div class="section-header">
+                        <h6 class="section-title">Register New Bot</h6>
+                    </div>
+                    
+                    <div class="register-layout">
+                        <!-- Barcode Preview Section -->
+                        <div class="barcode-section">
+                            <div class="bot-id-preview">
+                                <div class="bot-id-display" id="botIdDisplay">Generating ID...</div>
+                                <div class="barcode-preview-container">
+                                    <canvas id="barcodePreview" style="width: 100%; height: auto;"></canvas>
+                                    <div class="barcode-label" id="previewLabel">Bot ID</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Section -->
+                        <div class="form-section">
+                            <form id="registerForm" class="compact-form">
+                                <div class="row">
+                                    <div class="col-md-6 col-12">
+                                        <label for="model" class="form-label">Bot Model</label>
+                                        <select class="form-select" id="model" name="model" required>
+                                            <option value="">Select Model</option>
+                                            <option value="AGOS-MK1">AGOS-MK1</option>
+                                            <option value="AGOS-MK2">AGOS-MK2</option>
+                                            <option value="AGOS-PRO">AGOS-PRO</option>
+                                            <option value="AGOS-LITE">AGOS-LITE</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-12">
+                                        <label for="hardware_version" class="form-label">Hardware Version</label>
+                                        <select class="form-select" id="hardware_version" name="hardware_version" required>
+                                            <option value="">Select Version</option>
+                                            <option value="1.0">1.0</option>
+                                            <option value="1.1">1.1</option>
+                                            <option value="1.2">1.2</option>
+                                            <option value="2.0">2.0</option>
+                                            <option value="2.1">2.1</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 col-12">
+                                        <label for="manufactured_on" class="form-label">Manufacturing Date</label>
+                                        <input type="date" class="form-control" id="manufactured_on" name="manufactured_on" required>
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-12">
+                                        <label class="form-label">Serial Number</label>
+                                        <input type="text" class="form-control" value="Auto-generated" readonly style="background-color: #f8f9fa; color: #6c757d;">
+                                        <small class="form-text text-muted">Serial number will be automatically generated</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12">
+                                        <label for="notes" class="form-label">Manufacturing Notes</label>
+                                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                                  placeholder="Optional manufacturing notes and specifications"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-12 text-center">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <span class="loading-spinner spinner-border spinner-border-sm me-2"></span>
+                                            <i class="bi bi-plus-circle me-2"></i>Register Bot
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                            
+                            <!-- Success Message -->
+                            <div id="successAlert" class="alert success-alert mt-4" style="display: none;">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-check-circle-fill me-3" style="font-size: 1.5rem;"></i>
+                                    <div>
+                                        <strong>Bot Registered Successfully!</strong><br>
+                                        <small>Bot ID: <span id="newBotId"></span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bots Tab -->
+                <div class="tab-pane fade" id="bots-pane" role="tabpanel">
+                    <div class="section-header">
+                        <h6 class="section-title">Registered Bots</h6>
+                        <button id="refreshBots" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <div class="position-relative">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" id="searchInput" class="form-control search-input" 
+                                   placeholder="Search by Bot ID, Model, or Date...">
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%;">Bot ID</th>
+                                    <th style="width: 15%;">Serial Number</th>
+                                    <th style="width: 12%;">Model</th>
+                                    <th style="width: 8%;">HW Ver</th>
+                                    <th style="width: 12%;">Date</th>
+                                    <th style="width: 18%;">Barcode</th>
+                                    <th style="width: 15%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="botsTableBody">
+                                {% for bot in bots %}
+                                <tr data-searchable="{{ bot.bot_id|lower }} {{ bot.serial_number|lower if bot.serial_number else '' }} {{ bot.model|lower if bot.model else '' }} {{ bot.hardware_version if bot.hardware_version else '' }} {{ bot.manufactured_on.strftime('%m/%d/%y') if bot.manufactured_on else '' }}">
+                                    <td><code class="text-primary fw-bold">{{ bot.bot_id }}</code></td>
+                                    <td><code class="text-muted">{{ bot.serial_number if bot.serial_number else 'N/A' }}</code></td>
+                                    <td><span class="badge" style="background: var(--primary-blue); color: white;">{{ bot.model if bot.model else 'N/A' }}</span></td>
+                                    <td><span class="badge bg-secondary">{{ bot.hardware_version if bot.hardware_version else 'N/A' }}</span></td>
+                                    <td class="text-muted">
+                                        {% if bot.manufactured_on %}
+                                            {{ bot.manufactured_on.strftime('%m/%d/%y') }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="barcode-container">
+                                            <canvas class="table-barcode" data-bot-id="{{ bot.bot_id }}" style="max-width: 110px; height: 28px;"></canvas>
+                                            <div class="barcode-label">{{ bot.bot_id }}</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-outline-info btn-action" onclick="viewBot('{{ bot.bot_id }}')" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-outline-success btn-action" onclick="downloadBarcode('{{ bot.bot_id }}')" title="Download Barcode">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-action" onclick="printBarcode('{{ bot.bot_id }}')" title="Print Barcode">
+                                                <i class="bi bi-printer"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        {% if not bots %}
+                        <div class="empty-state">
+                            <i class="bi bi-robot" style="font-size: 2.5rem;"></i>
+                            <p class="mt-3 mb-0">No bots registered yet</p>
+                            <small class="text-muted">Use the Register tab to add your first bot</small>
+                        </div>
+                        {% endif %}
+                        
+                        <div id="noResults" class="no-results" style="display: none;">
+                            <i class="bi bi-search" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0">No bots found</p>
+                            <small>Try adjusting your search terms</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Details Modal -->
+    <div class="modal fade" id="botDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--bg-blue); border-bottom: 2px solid var(--border-blue);">
+                    <h5 class="modal-title" style="color: var(--text-blue); font-weight: 700;">Bot Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="botDetailsContent">
+                    <!-- Bot details will be loaded here -->
+                </div>
+                <div class="modal-footer" style="background: #f8f9fa;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="printModalBarcode" class="btn btn-primary">
+                        <i class="bi bi-printer me-1"></i>Print Barcode
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
